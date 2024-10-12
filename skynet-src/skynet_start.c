@@ -206,10 +206,10 @@ start(int thread) {
 	create_thread(&pid[1], thread_timer, m);
 	create_thread(&pid[2], thread_socket, m);
 
-	static int weight[] = { 
+	static int weight[] = {
 		-1, -1, -1, -1, 0, 0, 0, 0,
-		1, 1, 1, 1, 1, 1, 1, 1, 
-		2, 2, 2, 2, 2, 2, 2, 2, 
+		1, 1, 1, 1, 1, 1, 1, 1,
+		2, 2, 2, 2, 2, 2, 2, 2,
 		3, 3, 3, 3, 3, 3, 3, 3, };
 	struct worker_parm wp[thread];
 	for (i=0;i<thread;i++) {
@@ -224,7 +224,7 @@ start(int thread) {
 	}
 
 	for (i=0;i<thread+3;i++) {
-		pthread_join(pid[i], NULL); 
+		pthread_join(pid[i], NULL);
 	}
 
 	free_monitor(m);
@@ -236,7 +236,7 @@ bootstrap(struct skynet_context * logger, const char * cmdline) {
 	char name[sz+1];
 	char args[sz+1];
 	int arg_pos;
-	sscanf(cmdline, "%s", name);  
+	sscanf(cmdline, "%s", name);
 	arg_pos = strlen(name);
 	if (arg_pos < sz) {
 		while(cmdline[arg_pos] == ' ') {
@@ -254,7 +254,7 @@ bootstrap(struct skynet_context * logger, const char * cmdline) {
 	}
 }
 
-void 
+void
 skynet_start(struct skynet_config * config) {
 	// register SIGHUP for log file reopen
 	struct sigaction sa;
@@ -269,8 +269,8 @@ skynet_start(struct skynet_config * config) {
 		}
 	}
 	skynet_harbor_init(config->harbor);
-	skynet_handle_init(config->harbor);
-	skynet_mq_init();
+  skynet_handle_init(config->harbor);
+  skynet_mq_init();
 	skynet_module_init(config->module_path);
 	skynet_timer_init();
 	skynet_socket_init();

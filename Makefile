@@ -29,13 +29,13 @@ JEMALLOC_STATICLIB := 3rd/jemalloc/lib/libjemalloc_pic.a
 JEMALLOC_INC := 3rd/jemalloc/include/jemalloc
 
 all : jemalloc
-	
+
 .PHONY : jemalloc update3rd
 
 MALLOC_STATICLIB := $(JEMALLOC_STATICLIB)
 
 $(JEMALLOC_STATICLIB) : 3rd/jemalloc/Makefile
-	cd 3rd/jemalloc && $(MAKE) CC=$(CC) 
+	cd 3rd/jemalloc && $(MAKE) CC=$(CC)
 
 3rd/jemalloc/autogen.sh :
 	git submodule update --init
@@ -79,8 +79,9 @@ SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
 all : \
   $(SKYNET_BUILD_PATH)/skynet \
   $(foreach v, $(CSERVICE), $(CSERVICE_PATH)/$(v).so) \
-  $(foreach v, $(LUA_CLIB), $(LUA_CLIB_PATH)/$(v).so) 
+  $(foreach v, $(LUA_CLIB), $(LUA_CLIB_PATH)/$(v).so)
 
+# 构建 skynet 可执行文件，这里不依赖下面构建的 so 模块
 $(SKYNET_BUILD_PATH)/skynet : $(foreach v, $(SKYNET_SRC), skynet-src/$(v)) $(LUA_LIB) $(MALLOC_STATICLIB)
 	$(CC) $(CFLAGS) -o $@ $^ -Iskynet-src -I$(JEMALLOC_INC) $(LDFLAGS) $(EXPORT) $(SKYNET_LIBS) $(SKYNET_DEFINES)
 
@@ -95,8 +96,10 @@ define CSERVICE_TEMP
 	$$(CC) $$(CFLAGS) $$(SHARED) $$< -o $$@ -Iskynet-src
 endef
 
+# 构建 service-src 目录下的 service_* 文件至 cservice 目录
 $(foreach v, $(CSERVICE), $(eval $(call CSERVICE_TEMP,$(v))))
 
+# 构建 lualib-src 或 3rd 目录下的文件至 luaclib 目录
 $(LUA_CLIB_PATH)/skynet.so : $(addprefix lualib-src/,$(LUA_CLIB_SKYNET)) | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -Iservice-src -Ilualib-src
 
@@ -104,20 +107,21 @@ $(LUA_CLIB_PATH)/bson.so : lualib-src/lua-bson.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
 
 $(LUA_CLIB_PATH)/md5.so : 3rd/lua-md5/md5.c 3rd/lua-md5/md5lib.c 3rd/lua-md5/compat-5.2.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-md5 $^ -o $@ 
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-md5 $^ -o $@
 
 $(LUA_CLIB_PATH)/client.so : lualib-src/lua-clientsocket.c lualib-src/lua-crypt.c lualib-src/lsha1.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread
 
 $(LUA_CLIB_PATH)/sproto.so : lualib-src/sproto/sproto.c lualib-src/sproto/lsproto.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -Ilualib-src/sproto $^ -o $@ 
+	$(CC) $(CFLAGS) $(SHARED) -Ilualib-src/sproto $^ -o $@
 
 $(LUA_CLIB_PATH)/ltls.so : lualib-src/ltls.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src -L$(TLS_LIB) -I$(TLS_INC) $^ -o $@ -lssl
 
 $(LUA_CLIB_PATH)/lpeg.so : 3rd/lpeg/lpcap.c 3rd/lpeg/lpcode.c 3rd/lpeg/lpprint.c 3rd/lpeg/lptree.c 3rd/lpeg/lpvm.c 3rd/lpeg/lpcset.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -I3rd/lpeg $^ -o $@ 
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lpeg $^ -o $@
 
+# 清理命令
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so && \
   rm -rf $(SKYNET_BUILD_PATH)/*.dSYM $(CSERVICE_PATH)/*.dSYM $(LUA_CLIB_PATH)/*.dSYM
